@@ -204,6 +204,7 @@ def commit_to_dict(branch_name, commit):
     for tag in commit.repo.tags:
         if tag.commit == commit:
             d["tag"] = tag.name
+            print(f"tag {tag.name} found for commit {commit.hexsha}")
     return d
 
 
