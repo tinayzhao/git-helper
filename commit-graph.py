@@ -19,18 +19,24 @@ COMMIT = 1
 HEAD = 1
 
 commits = pd.read_csv('commits.csv')
+edges = pd.read_csv('edges.csv')
 
 def get_node_positions(commits_df):
 	df = commits_df
 	df['pos'] = ''
 	branchX = {}
 	branchY = {}
-	nodePos = {}
+	childToParent = dict(zip(edges['child_sha'], edges['parent_sha']))
+	earliestTime = min(commits['timestamp'])
 	nextBranchHeight = 0
+	nodePos = {}
 	for row in df.iterrows():
-		commit = row[1]['Commit']
-		branch = row[1]['Branch']
-		parent = row[1]['Parent']
+		commit = row[1]['commit_sha']
+		branch = row[1]['branch']
+		if (row[1]['timestamp'] == earliestTime):
+			parent = float('nan')
+		else:
+			parent = childToParent[commit]	
 		if (branch not in branchX):
 			if (not math.isnan(parent)): ### work here
 				branchX[branch] = nodePos[parent][0] + .25
@@ -47,12 +53,12 @@ def get_node_positions(commits_df):
 
 	return nodePos
 
-def commit_graph(head, CommitToSearch, start = 0, stop = len(commits)):
-	commits_df = commits.iloc[start:stop,:]
-	commits_edges = commits[commits['Parent'].notnull()]
-	commitsList = commits['Commit']
-	source = commits_edges['Parent']
-	target = commits_edges['Commit']
+def commit_graph(CommitToSearch):
+	edges_df = edges
+	commits_df = commits
+	commitsList = commits['commit_sha']
+	source = edges_df['parent_sha']
+	target = edges_df['child_sha']
 
 	shells = []
 	shell1=[]
@@ -64,8 +70,10 @@ def commit_graph(head, CommitToSearch, start = 0, stop = len(commits)):
 			shell2.append(commit)
 	shells.append(shell2)
 
-	G = nx.from_pandas_edgelist(commits_edges, 'Parent', 'Commit', ['Commit'], create_using=nx.MultiDiGraph())
-	nx.set_node_attributes(G, commits_df.set_index('Commit')['Tag'].to_dict(), 'Tag')
+	G = nx.from_pandas_edgelist(edges_df, 'parent_sha', 'child_sha', ['child_sha'],create_using=nx.MultiDiGraph())
+	nx.set_node_attributes(G, commits_df.set_index('commit_sha')['commit_msg'].to_dict(), 'commit_msg')
+
+	print(G.nodes('020efe176a1080dadd578556c327a0d2f62dc2f3'))
 
 	if len(shell2) > 1:
 		pos = nx.layout.shell_layout(G, shells)
@@ -118,8 +126,9 @@ def commit_graph(head, CommitToSearch, start = 0, stop = len(commits)):
 	index = 0
 	for node in G.nodes():
 		x, y = G.nodes[node]['pos']
-		hovertext = "Tag: " + str(G.nodes[node]['Tag'])
-		text = commits['Tag'][index]
+		print(G.nodes[node])
+		hovertext = "Commit Message: " + str(G.nodes[node]['commit_msg'])
+		text = commits['commit_sha'][index][:4] + "..."
 		node_trace['x'] += tuple([x])
 		node_trace['y'] += tuple([y])
 		node_trace['hovertext'] += tuple([hovertext])
@@ -133,13 +142,11 @@ def commit_graph(head, CommitToSearch, start = 0, stop = len(commits)):
 	###################################
 	index = 0
 	for edge in G.edges:
-	    x0, y0 = G.nodes[edge[0]]['pos']
-	    x1, y1 = G.nodes[edge[1]]['pos']
-	    hovertext = str(G.edges[edge]['Commit']) 
-	    middle_hover_trace['x'] += tuple([(x0 + x1) / 2])
-	    middle_hover_trace['y'] += tuple([(y0 + y1) / 2])
-	    middle_hover_trace['hovertext'] += tuple([hovertext])
-	    index = index + 1
+		x0, y0 = G.nodes[edge[0]]['pos']
+		x1, y1 = G.nodes[edge[1]]['pos']
+		middle_hover_trace['x'] += tuple([(x0 + x1) / 2])
+		middle_hover_trace['y'] += tuple([(y0 + y1) / 2])
+		index = index + 1
 
 	traceRecode.append(middle_hover_trace)
 
@@ -196,7 +203,7 @@ app.layout = html.Div([
 	html.Div(
 		className='graph',
 		children=[dcc.Graph(id="my-graph", 
-			figure = commit_graph(HEAD, COMMIT))],
+			figure = commit_graph(COMMIT))],
 	),
 	#####
 	html.Div(
