@@ -12,6 +12,8 @@ Use as follows:
 from git import *
 import csv
 import sys
+import operator
+import pandas as pd
 
 
 """ Returns a List of String filenames from the given Commit object. """
@@ -155,6 +157,12 @@ def export_to_csv(commits_by_branch, edges):
             writer.writerow(edge)
 
 
+    """ We now sort the 'commits.csv' file by the 'timestamp' column. """
+    df = pd.read_csv("commits.csv")
+    df = df.sort_values(by=["timestamp"])
+    df.to_csv("commits.csv")
+
+
 if __name__ == "__main__":
 
     if len(sys.argv) != 3:
@@ -164,6 +172,5 @@ if __name__ == "__main__":
         n = sys.argv[2]
 
         commits, edges = n_most_recent_commits(repo, n)
-
         export_to_csv(commits, edges)
 
