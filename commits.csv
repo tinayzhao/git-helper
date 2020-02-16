@@ -1,15 +1,5 @@
-﻿Commit,Tag,Branch,Parent
-1,A,Master,
-2,B,Master,1
-3,C,Master,2
-4,D,Master,3
-5,E,Side 1,4
-6,F,Side 1,5
-7,G,Master,4
-8,H,Master,7
-9,I,Side 2,1
-10,J,Side 2,9
-11,K,Side 3,7
-12,L,Side 3,11
-13,M,Side 4,7
-14,N,Side 4,13
+commit_sha,tree_sha,commit_msg,timestamp,tag,branch,is_head,is_head_of_branch
+258b024409cc6777b1ad5b57159ce30d2876fb7b,ef455d96ce257b9b463b452c93a8d6883e30bc3d,a is dog,1581812942,,master,False,False
+12ba5ebd85463beb3555d30cd4dfc3a82f9188ee,2e16aaaa53e7e4fd4acca1224fbd39e2ce76408d,b is cat in other_branch,1581812970,,other_branch,False,True
+d13d1dc934868675dc57e8b6faff28b85cadfc20,8e89508a267d2381408e0243d01eb297839d1cb0,b is kitty in b.txt,1581812989,,master,False,False
+9a3af6e575c2ed8ec19ccda9daba142965c55c25,ca49bee35948de09362775bb9b6b66337fe8625e,b is now kitty-cat,1581813011,second_tag,master,True,True
