@@ -10,6 +10,8 @@ from datetime import datetime
 from textwrap import dedent as d
 import json
 import math
+from git import *
+import os
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -34,11 +36,11 @@ def get_node_positions(commits_df):
 		commit = row[1]['commit_sha']
 		branch = row[1]['branch']
 		if (row[1]['timestamp'] == earliestTime):
-			parent = float('nan')
+			parent = ""
 		else:
 			parent = childToParent[commit]	
 		if (branch not in branchX):
-			if (not math.isnan(parent)): ### work here
+			if parent != "": ### work here
 				branchX[branch] = nodePos[parent][0] + .25
 			else:
 				branchX[branch] = 0
@@ -213,12 +215,17 @@ app.layout = html.Div([
 )
 
 
-
-
-
-
-
-
+@app.callback(
+    dash.dependencies.Output('my-graph', 'figure'),
+    [dash.dependencies.Input('my-graph', 'clickData')])
+def display_click_data(clickData):
+    repo = Repo(".")
+    if clickData:
+        commitID = clickData['points'][0]['text'][0:4]
+        repo.git.merge(commitID) 
+        os.system("python3 parser.py . 20") #magic number 20
+    return commit_graph(COMMIT)
+   
 	
 
 
