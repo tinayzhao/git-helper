@@ -110,13 +110,14 @@ def n_most_recent_commits(repo, n):
     export_to_csv function below. """
 def commit_to_dict(branch_name, commit):
     d = {}
-    d["commit_sha"] = commit.hexsha
-    d["commit_msg"] = commit.summary
-    d["timestamp"]  = commit.authored_date
-    d["branch"]     = branch_name 
-    d["is_head"]    = commit.repo.commit() == commit
+    d["commit_sha"]        = commit.hexsha
+    d["tree_sha"]          = commit.tree.hexsha
+    d["commit_msg"]        = commit.summary
+    d["timestamp"]         = commit.authored_date
+    d["branch"]            = branch_name 
+    d["is_head"]           = commit.repo.commit() == commit
     d["is_head_of_branch"] = any([commit == b.commit for b in commit.repo.branches])
-    d["tag"] = ""
+    d["tag"]               = ""
 
     for tag in commit.repo.tags:
         if tag.commit == commit:
@@ -129,7 +130,7 @@ def commit_to_dict(branch_name, commit):
 
     
     commits.csv has the following columns:
-    commit_sha, commit_msg, timestamp, tag, branch, is_head, is_head_of_branch
+    commit_sha, tree_sha, commit_msg, timestamp, tag, branch, is_head, is_head_of_branch
 
     where is_head and is_head_of_branch will be either 'True' or 'False'
 
@@ -138,7 +139,7 @@ def commit_to_dict(branch_name, commit):
 
 """
 def export_to_csv(commits_by_branch, edges):
-    commit_columns = ["commit_sha", "commit_msg", "timestamp", "tag", \
+    commit_columns = ["commit_sha", "tree_sha", "commit_msg", "timestamp", "tag", \
             "branch", "is_head", "is_head_of_branch"]
     with open('commits.csv', 'w', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames = commit_columns)
