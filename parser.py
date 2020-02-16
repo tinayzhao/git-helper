@@ -83,28 +83,42 @@ def n_most_recent_commits(repo, n):
     """ Already added the most recent commit. """
     i = 1
     commits = {} 
+    visited_commit_shas = set()
     edges = []
-    for branch_name, commit in queue:
+    while queue != []:
+        print(queue)
+        branch_name, commit = queue.pop(0)
+        if commit.hexsha not in visited_commit_shas:
+            visited_commit_shas.add(commit.hexsha)
+        else:
+            print(commit.hexsha, branch_name)
+            continue
+        print(commit.hexsha, branch_name)
         if branch_name not in commits:
             commits[branch_name] = [commit]
         else:
             commits[branch_name].append(commit)
 
         is_merge = len(commit.parents) > 1
+        to_add = []
         for parent_commit in commit.parents:
             """ Done adding commits. """
             if i == n:
                 break
+            i += 1
             if is_merge:
+                found = False
                 for branch in repo.branches:
                     if branch.commit == parent_commit:
-                        queue.append( (branch.name, parent_commit) )
+                        found = True
+                        to_add.append( (branch.name, parent_commit) )
+                        edges.append( (commit, parent_commit) )
                         break
-            else:
-                queue.append( (branch_name, parent_commit) )
-
+                if found:
+                    continue
+            to_add = [ (branch_name, parent_commit) ] + to_add
             edges.append( (commit, parent_commit) )
-            i += 1
+        queue.extend(to_add)
     return commits, edges
 
 
@@ -160,7 +174,7 @@ def export_to_csv(commits_by_branch, edges):
     """ We now sort the 'commits.csv' file by the 'timestamp' column. """
     df = pd.read_csv("commits.csv")
     df = df.sort_values(by=["timestamp"])
-    df.to_csv("commits.csv")
+    df.to_csv("commits.csv", index=False)
 
 
 if __name__ == "__main__":

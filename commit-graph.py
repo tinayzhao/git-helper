@@ -34,11 +34,11 @@ def get_node_positions(commits_df):
 		commit = row[1]['commit_sha']
 		branch = row[1]['branch']
 		if (row[1]['timestamp'] == earliestTime):
-			parent = float('nan')
+			parent = "" 
 		else:
 			parent = childToParent[commit]	
 		if (branch not in branchX):
-			if (not math.isnan(parent)): ### work here
+			if parent != "": ### work here
 				branchX[branch] = nodePos[parent][0] + .25
 			else:
 				branchX[branch] = 0
@@ -70,10 +70,10 @@ def commit_graph(CommitToSearch):
 			shell2.append(commit)
 	shells.append(shell2)
 
-	G = nx.from_pandas_edgelist(edges_df, 'parent_sha', 'child_sha', ['child_sha'],create_using=nx.MultiDiGraph())
+	G = nx.from_pandas_edgelist(edges_df, 'child_sha', 'parent_sha', create_using=nx.MultiDiGraph())
 	nx.set_node_attributes(G, commits_df.set_index('commit_sha')['commit_msg'].to_dict(), 'commit_msg')
+	nx.set_node_attributes(G, pd.Series(commits_df.commit_sha.values,index=commits_df.commit_sha.values).to_dict(), "commit_sha")
 
-	print(G.nodes('020efe176a1080dadd578556c327a0d2f62dc2f3'))
 
 	if len(shell2) > 1:
 		pos = nx.layout.shell_layout(G, shells)
@@ -126,9 +126,8 @@ def commit_graph(CommitToSearch):
 	index = 0
 	for node in G.nodes():
 		x, y = G.nodes[node]['pos']
-		print(G.nodes[node])
 		hovertext = "Commit Message: " + str(G.nodes[node]['commit_msg'])
-		text = commits['commit_sha'][index][:4] + "..."
+		text = G.nodes[node]["commit_sha"][:4] + "..." 
 		node_trace['x'] += tuple([x])
 		node_trace['y'] += tuple([y])
 		node_trace['hovertext'] += tuple([hovertext])
