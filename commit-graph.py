@@ -12,6 +12,7 @@ import json
 import math
 from git import *
 import os
+import time
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -22,6 +23,7 @@ HEAD = 1
 
 commits = pd.read_csv('commits.csv')
 edges = pd.read_csv('edges.csv')
+
 
 def get_node_positions(commits_df):
 	df = commits_df
@@ -55,13 +57,15 @@ def get_node_positions(commits_df):
 
 	return nodePos
 
-def commit_graph(CommitToSearch):
-	edges_df = edges
-	commits_df = commits
-	commitsList = commits['commit_sha']
+def commit_graph(CommitToSearch, commits_df, edges_df):
+	#edges_df = self.e
+	#commits_df = self.commits
+	commitsList = commits_df['commit_sha']
 	source = edges_df['parent_sha']
 	target = edges_df['child_sha']
-
+	print("inside commit_graph")
+	print(edges_df)
+	print(commits_df)
 	shells = []
 	shell1=[]
 	shell1.append(CommitToSearch)
@@ -114,6 +118,7 @@ def commit_graph(CommitToSearch):
 	index = 0
 	
 	for edge in G.edges:
+		print(G.nodes[edge[0]])
 		x0, y0 = G.nodes[edge[0]]['pos']
 		x1, y1 = G.nodes[edge[1]]['pos']
 		trace = go.Scatter(x=tuple([x0, x1, None]), y=tuple([y0, y1, None]),
@@ -198,13 +203,19 @@ app.layout = html.Div([
 				html.Div(id="output")
 			],
 			style = {'height': '300px'}
-			)
+			)#,
+			#html.Div(
+			#	className='gitcommand',
+			#	children=[
+			#	dcc.Input(id="input2", type="text",placeholder="Command")
+			#	]
+			#)
 		]
 	),
 	html.Div(
 		className='graph',
 		children=[dcc.Graph(id="my-graph", 
-			figure = commit_graph(COMMIT))],
+			figure = commit_graph(COMMIT, commits, edges))],
 	),
 	#####
 	html.Div(
@@ -216,22 +227,39 @@ app.layout = html.Div([
 
 @app.callback(
     dash.dependencies.Output('my-graph', 'figure'),
+   # dash.dependencies.Output('git-command', 'value'),
     [dash.dependencies.Input('my-graph', 'clickData')])
-def display_click_data(clickData):
-    repo = Repo(".")
+def update_figure(clickData):
+    file = open('repo.txt', 'r')
+    repoPath = file.read()
+    repo = Repo(repoPath)
+    msg = ""
+    commits = pd.read_csv('commits.csv')
+    edges = pd.read_csv('edges.csv')
     if clickData:
         commitID = clickData['points'][0]['text'][0:4]
+        print(commitID)
         try:
             repo.git.merge(commitID)
+            print("did command")
+            msg = "git merge " + commitID
+            print(msg)
+            os.system("python3 parser.py " + repoPath)
+            time.sleep(10)
+            commits = pd.read_csv('commits.csv')
+            edges = pd.read_csv('edges.csv')
+           # print(commits)
+           # print(edges)
+           # app.run_server(debug=True)	
         except:
-			print("Unable to merge " + commitID)
-        os.system("python3 parser.py . 20") #magic number 20
-    return commit_graph(COMMIT)
+            msg = "Unable to merge " + commitID
+            print(msg)
+    return commit_graph(COMMIT, commits, edges)
+    #, msg
    
-	
 
-
-app.run_server(debug=True)			
+if __name__ == "__main__":
+	app.run_server(debug=True)			
 					
 				
 
