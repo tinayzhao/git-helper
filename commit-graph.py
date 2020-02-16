@@ -221,7 +221,10 @@ def display_click_data(clickData):
     repo = Repo(".")
     if clickData:
         commitID = clickData['points'][0]['text'][0:4]
-        repo.git.merge(commitID) 
+        try:
+            repo.git.merge(commitID)
+        except:
+			print("Unable to merge " + commitID)
         os.system("python3 parser.py . 20") #magic number 20
     return commit_graph(COMMIT)
    
